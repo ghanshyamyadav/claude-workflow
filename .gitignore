@@ -1,0 +1,22 @@
+.env
+.env.local
+*.log
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Workflow runtime state and local config (per-project, never commit)
+.workflow/
+
+# Local Claude Code dev settings (not for committing)
+.claude/

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "workflow-cli"
+version = "0.1.0"
+description = "Claude Code slash commands that turn natural-language tasks into validated code changes via a repo graph, a planner, and offloaded subprocess executors."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+  "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+workflow = "workflow.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["workflow*"]
+
+[tool.setuptools.package-data]
+workflow = ["slash_commands/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
