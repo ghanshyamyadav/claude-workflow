@@ -20,7 +20,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         #   glm-4.7-flash   — best balance of speed/quality, 128K ctx, MoE (3B active/30B total)
         #   qwen3-coder:30b — RL-trained on SWE-Bench, strongest at multi-file edits
         #   qwen2.5-coder:32b — reliable tool calling, good context adherence
-        "model": "qwen2.5-coder:7b",
+        "model": "qwen3.5:latest",
         "timeout_seconds": 900,
         # Metadata: honored by the slash-command orchestrator, not exec-step.
         "max_parallel": 1,
