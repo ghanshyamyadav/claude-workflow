@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 
 
@@ -49,63 +50,53 @@ Rules:
 
 def build_claude_code_prompt(
     *,
-    task: str,
     step: dict,
     files_in_scope: list[str],
     retry_error: str | None = None,
 ) -> str:
-    """Build the `-p` prompt for the Claude Code executor subprocess."""
+    """Build the `-p` prompt for the Claude Code executor subprocess.
+
+    Intentionally minimal: the planner already bakes task context and
+    clarifications into each step's description and constraints — the
+    executor only needs those, not the raw task document.
+    """
     parts: list[str] = []
 
-    # Remind local models of the termination contract right at the top.
-    parts += [
-        "REMINDER: your final output line MUST be exactly `DONE` or `NEEDS_REPLAN: <reason>` — nothing after it.",
-        "",
-    ]
-
-    parts += ["<task>", task.strip(), "</task>", ""]
-
-    parts += [f"<step num={step['num']!r} title={step['title']!r}>"]
     if step.get("description"):
-        parts += [step["description"].strip()]
+        parts += [step["description"].strip(), ""]
+
     if step.get("constraints"):
-        parts.append("Constraints:")
+        parts.append("Requirements:")
         for c in step["constraints"]:
             parts.append(f"- {c}")
-    parts += ["</step>", ""]
+        parts.append("")
 
-    parts += ["<files_in_scope>"]
     if files_in_scope:
-        for f in files_in_scope:
-            parts.append(f"- `{f}`")
+        to_edit = [f for f in files_in_scope if os.path.exists(f)]
+        to_create = [f for f in files_in_scope if not os.path.exists(f)]
+        if to_edit:
+            label = "File" if len(to_edit) == 1 else "Files"
+            parts.append(f"{label} to edit (already exist — use Edit tool):")
+            for f in to_edit:
+                parts.append(f"  {f}")
+            parts.append("")
+        if to_create:
+            label = "File" if len(to_create) == 1 else "Files"
+            parts.append(f"{label} to create (do not exist yet — use Write tool):")
+            for f in to_create:
+                parts.append(f"  {f}")
+            parts.append("")
     else:
-        parts.append("(none — this step must not modify any file; if that is wrong, output `NEEDS_REPLAN`)")
-    parts += ["</files_in_scope>", ""]
-
-    parts += [
-        "You may Read any file in the repo for context, but you may ONLY Edit or",
-        "Write the files listed in <files_in_scope>. If you need to change anything",
-        "else, output `NEEDS_REPLAN: <reason>` as the last line and stop.",
-        "",
-    ]
+        parts += ["Do not modify any file. If a file change is needed, output `NEEDS_REPLAN: <reason>`.", ""]
 
     if retry_error:
         parts += [
-            "<previous_failure>",
-            retry_error.strip()[:4000],
-            "</previous_failure>",
-            "",
-            "Fix the issue. The current tree already contains your previous edits — re-read",
-            "the scoped files before deciding what to change.",
+            f"Previous attempt failed: {retry_error.strip()[:2000]}",
+            "Re-read any existing files above before making changes.",
             "",
         ]
 
-    parts += [
-        "Execute the step now.",
-        "When finished, write `DONE` on its own line as your very last output.",
-        "If impossible as described, write `NEEDS_REPLAN: <reason>` as your very last output.",
-        "Do not write anything after that line.",
-    ]
+    parts.append("End your response with `DONE` or `NEEDS_REPLAN: <reason>` — nothing after it.")
     return "\n".join(parts)
 
 

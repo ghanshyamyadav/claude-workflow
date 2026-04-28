@@ -18,7 +18,7 @@ from workflow.state.run import (
     save_state,
     write_step_artifacts,
 )
-from workflow.util.fs import exists, read_text
+from workflow.util.fs import exists
 from workflow.util.log import color, fail, fatal, info, ok, step, warn
 from workflow.validator.runner import run_validation
 
@@ -46,7 +46,6 @@ def run(*, cwd: Path, run_id: str, step_num: int) -> None:
         fatal(f"Step {step_num} not found in state.")
         return
 
-    task = read_text(run_paths(cwd, run_id).task)
     max_attempts = _max_attempts(config)
     in_scope = list(plan_step.get("files") or [])
     retry_error: str | None = None
@@ -69,7 +68,6 @@ def run(*, cwd: Path, run_id: str, step_num: int) -> None:
         info(f"  spawning executor ({color.dim(label)})...")
 
         prompt = build_claude_code_prompt(
-            task=task,
             step={"num": step_num, **plan_step},
             files_in_scope=in_scope,
             retry_error=retry_error,

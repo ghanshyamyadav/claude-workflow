@@ -3,11 +3,9 @@ from workflow.executor.prompt import build_claude_code_prompt, parse_termination
 
 def test_prompt_contains_scope_and_files():
     prompt = build_claude_code_prompt(
-        task="Add rate limiting",
         step={"num": 2, "title": "Register middleware", "description": "wire the limiter"},
         files_in_scope=["src/app.ts", "src/middleware.ts"],
     )
-    assert "Step 2: Register middleware" in prompt
     assert "wire the limiter" in prompt
     assert "src/app.ts" in prompt
     assert "src/middleware.ts" in prompt
@@ -17,7 +15,6 @@ def test_prompt_contains_scope_and_files():
 
 def test_prompt_does_not_inline_file_contents():
     prompt = build_claude_code_prompt(
-        task="t",
         step={"num": 1, "title": "x"},
         files_in_scope=["a.ts"],
     )
@@ -26,16 +23,14 @@ def test_prompt_does_not_inline_file_contents():
 
 def test_prompt_empty_scope_calls_out_replan_guidance():
     prompt = build_claude_code_prompt(
-        task="t",
         step={"num": 1, "title": "x"},
         files_in_scope=[],
     )
-    assert "should not modify any file" in prompt
+    assert "Do not modify any file" in prompt
 
 
 def test_prompt_retry_section_included_when_error_present():
     prompt = build_claude_code_prompt(
-        task="t",
         step={"num": 1, "title": "x"},
         files_in_scope=["a.ts"],
         retry_error="TypeError: undefined is not a function",
